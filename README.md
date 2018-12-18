@@ -2,7 +2,42 @@
 
 > Download all your female-presenting nipples from Tumblr
 
-## Usage
+## Install
+
+First, please ensure [Chrome](https://www.google.com/chrome/) is installed on
+your computer.
+
+### Windows Users
+
+Download this binary:
+
+- [Download for Windows](https://github.com/jamiebuilds/tumblr-downloader/raw/master/binaries/bin-win.exe)
+
+You should be able to double-click on it to launch it in the "Command Line"
+program. Follow the prompts from there.
+
+> **Note:** Your computer's anti-virus software might get angry at this program
+> but don't worry about it. I'm sorry I don't know more about Windows development.
+
+### macOS Users
+
+Download this binary:
+
+- [Download for macOS](https://github.com/jamiebuilds/tumblr-downloader/raw/master/binaries/bin-macos)
+
+Then open up `Terminal.app` and drag the downloaded binary onto the window and
+hit `return`. Follow the prompts from there.
+
+#### Linux Users
+
+Download this binary:
+
+- [Download for Linux](https://github.com/jamiebuilds/tumblr-downloader/raw/master/binaries/bin-linux)
+
+Run the binary in your system's terminal/command line program. Follow the
+prompts from there.
+
+## CLI Usage
 
 ```sh
 

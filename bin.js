@@ -13,6 +13,13 @@ let pLimit = require('p-limit')
 let pRetry = require('p-retry')
 let downloadsFolder = require('downloads-folder')
 let chalk = require('chalk')
+let inquirer = require('inquirer')
+let isEmail = require('is-email')
+let expandTilde = require('expand-tilde')
+let Configstore = require('configstore');
+let pkg = require('./package.json');
+
+let store = new Configstore(pkg.name);
 
 let readFile = promisify(fs.readFile)
 let writeFile = promisify(fs.writeFile)
@@ -50,7 +57,7 @@ let cli = meow({
 		page: {
 			type: 'number',
       alias: 'p',
-      default: 0,
+      // default: 0,
     },
     dest: {
       type: 'string',
@@ -58,26 +65,14 @@ let cli = meow({
     },
     url: {
       type: 'string',
-      default: 'https://tumblr.com/likes',
+      // default: 'https://tumblr.com/likes',
     },
     concurrency: {
       type: 'number',
-      default: 10,
+      // default: 10,
     },
 	},
 });
-
-let email = cli.input[0]
-let password = cli.input[1]
-let startPage = cli.flags.page
-let downloadsConfig = cli.flags.dest
-let concurrency = cli.flags.concurrency
-let basePath = cli.flags.url
-
-if (!email || !password) {
-  cli.showHelp()
-  process.exit(1)
-}
 
 async function safeMkdir(dir) {
   try {
@@ -143,27 +138,79 @@ async function makePageFaster(page) {
 }
 
 async function main() {
-  let started = Date.now()
-
   console.log(chalk.magenta.bold(
     '\n' +
     ' ------------------------------------------\n' +
     '|                                          |\n' +
     '|     WELCOME TO THE TUMBLR DOWNLOADER     |\n' +
     '|                                          |\n' +
-    '|  (This is going to take a long time...)  |\n' +
-    '|                                          |\n' +
     ' ------------------------------------------\n' +
-    '\n'
+    '\n' +
+    'Please answer fill in the following fields:\n'
   ))
 
-  let downloadsPath;
+  let config = await inquirer.prompt([
+    {
+      message: 'Tumblr Account Email:',
+      type: 'input',
+      name: 'email',
+      default: store.get('email'),
+      when: () => typeof cli.input[0] === 'undefined',
+      validate: isEmail,
+    },
+    {
+      message: 'Tumblr Account Password:',
+      type: 'password',
+      name: 'password',
+      when: () => typeof cli.input[1] === 'undefined',
+      validate: input => input.length > 0,
+    },
+    {
+      message: 'Directory to create/download files into:',
+      type: 'input',
+      name: 'dest',
+      default: store.get('dest') || path.join(downloadsFolder(), 'tumblr-downloads'),
+      when: () => typeof cli.flags.dest === 'undefined',
+      validate: input => input.length > 0,
+    },
+    {
+      message: 'Paginated Tumblr URL to download from:',
+      type: 'input',
+      name: 'url',
+      default: store.get('url') || 'https://tumblr.com/likes',
+      when: () => typeof cli.flags.url === 'undefined',
+      validate: input => input.length > 0,
+    },
+    {
+      message: res => `Starting Page Number (i.e "${res.url}?page=<number>") (useful when restarting script):`,
+      type: 'input',
+      name: 'page',
+      default: store.get('page') || 0,
+      when: () => typeof cli.flags.page === 'undefined',
+      transformer: val => Number.isNaN(parseInt(val, 10)) ? '' : parseInt(val, 10),
+      validate: input => !Number.isNaN(parseInt(input, 10)),
+    },
+    {
+      message: 'Number of Chrome tabs to open at once:',
+      type: 'input',
+      name: 'concurrency',
+      default: store.get('concurrency') || 10,
+      when: () => typeof cli.flags.concurrency === 'undefined',
+      transformer: val => Number.isNaN(parseInt(val, 10)) ? '' : parseInt(val, 10),
+      validate: input => !Number.isNaN(parseInt(input, 10)),
+    },
+  ])
 
-  if (downloadsConfig) {
-    downloadsPath = path.resolve(process.cwd(), downloadsConfig)
-  } else {
-    downloadsPath = path.join(downloadsFolder(), 'tumblr-downloads')
-  }
+  store.set('email', config.email)
+  store.set('dest', config.dest)
+  store.set('url', config.url)
+  store.set('page', config.page)
+  store.set('concurrency', config.concurrency)
+
+  console.log(chalk.bold.magenta('\nAwesome! Starting now...\n'))
+
+  let started = Date.now()
+  let downloadsPath = path.resolve(process.cwd(), expandTilde(config.dest))
 
   console.log(chalk.magenta('init:'), chalk.dim(`Ensuring folder exists: ${chalk.italic(downloadsPath)}`))
   await safeMkdir(downloadsPath)
@@ -183,7 +230,7 @@ async function main() {
 
   if (page.url() !== 'https://www.tumblr.com/dashboard') {
     console.log(chalk.magenta('init:'), chalk.dim('Not logged in. Logging in using credentials...'))
-    await page.type('#signup_determine_email', email)
+    await page.type('#signup_determine_email', config.email)
     await page.click('#signup_forms_submit')
 
     await page.waitFor(500)
@@ -191,7 +238,7 @@ async function main() {
     await page.click('#signup_magiclink .magiclink_password_container .forgot_password_link');
     await page.waitFor(500)
 
-    await page.type('#signup_password', password)
+    await page.type('#signup_password', config.password)
     await page.click('#signup_forms_submit');
     await page.waitForNavigation({ waitUntil: 'domcontentloaded' })
   }
@@ -200,14 +247,14 @@ async function main() {
 
   await page.close()
 
-  let currentIndex = startPage
+  let currentIndex = config.page
   let emptyPages = 0
   let downloadLimit = pLimit(500)
   let promises = []
 
   async function next(page, poolIndex) {
     let prefix = chalk.cyan(`[${poolIndex}]`.padEnd(4));
-    let url = `${basePath}?page=${currentIndex}`;
+    let url = `${config.url}?page=${currentIndex}`;
     currentIndex++
     console.log(prefix, chalk.dim(`Opening: ${chalk.italic(url)}`))
 
@@ -254,7 +301,7 @@ async function main() {
 
   console.log(chalk.magenta('init:'), chalk.dim('Creating resource pool...'))
   let pool = []
-  for (let i = 0; i < concurrency; i++) {
+  for (let i = 0; i < config.concurrency; i++) {
     let page = await browser.newPage()
     await makePageFaster(page)
     pool.push(page)

@@ -12,8 +12,12 @@
   "dependencies": {
     "chalk": "^2.4.1",
     "chrome-paths": "^1.0.0",
+    "configstore": "^4.0.0",
     "downloads-folder": "^1.0.1",
+    "expand-tilde": "^2.0.2",
     "got": "^9.4.0",
+    "inquirer": "^6.2.1",
+    "is-email": "^1.0.0",
     "meow": "^5.0.0",
     "p-limit": "^2.0.0",
     "p-retry": "^3.0.0",
