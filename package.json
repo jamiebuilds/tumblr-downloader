@@ -1,0 +1,25 @@
+{
+  "name": "tumblr-downloader",
+  "version": "0.0.0",
+  "description": "Download all your female-presenting nipples from Tumblr",
+  "main": "index.js",
+  "author": "Jamie Kyle <me@thejameskyle.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "yarn pkg ./bin.js --out-path ./binaries",
+    "prepublish": "yarn build"
+  },
+  "dependencies": {
+    "chalk": "^2.4.1",
+    "chrome-paths": "^1.0.0",
+    "downloads-folder": "^1.0.1",
+    "got": "^9.4.0",
+    "meow": "^5.0.0",
+    "p-limit": "^2.0.0",
+    "p-retry": "^3.0.0",
+    "puppeteer-core": "^1.11.0"
+  },
+  "devDependencies": {
+    "pkg": "^4.3.5"
+  }
+}
