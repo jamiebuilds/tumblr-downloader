@@ -5,18 +5,28 @@
 ## Usage
 
 ```sh
-EMAIL=<your-email@example.com \
-PASSWORD=<your-password> \
-FOLDER=<~/path/to/folder> \
-BASE_PATH=<https://tumblr.com/path/to/posts> \
-PAGE=<number> \
-CONCURRENCY=<number>
-node index.js
+
+  Usage
+    $ tumblr-downloader "<email>" "<password>"
+
+  Options
+    --page, -p <number>    Starting ?page=<number> (useful when restarting script)
+    --dest, -d <filepath>  Folder to download into
+    --url <url>            Paginated Tumblr URL to download from
+    --concurrency          Number of Chromium tabs to run at the same time
+
+  Examples
+
+    Download all liked posts:
+    $ tumblr-downloader "you@example.com" "hunter42"
+
+    Download all blogged posts:
+    $ tumblr-downloader "you@example.com" "hunter42" --url "https://tumblr.com/blog/<your-blog-name>"
+
+    Download into specific folder:
+    $ tumblr-downloader "you@example.com" "hunter42" --dest ~/path/to/folder
+
+    Limit concurrency: (useful on low-powered machines)
+    $ tumblr-downloader "you@example.com" "hunter42" --concurrency 4
+
 ```
-
-The `ENVIRONMENT` variables will default to:
-
-- `FOLDER`: A new `tumblr-downloads` folder in your system's "downloads" folder
-- `BASE_PATH`: `https://tumblr.com/likes`
-- `PAGE`: `0`
-- `CONCURRENCY`: `10`
